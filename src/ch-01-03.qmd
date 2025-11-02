@@ -63,7 +63,6 @@ n_W <- purrr::map(n_samples, how_many_W) |>
   purrr::list_c()
 
 n_states <- rep(n_samples, n_samples+1)
-n_states
 
 p_n <- purrr::map2(n_W, n_states, dbinom, prob = 0.5, log = FALSE) |>
   purrr::list_c()
@@ -81,3 +80,36 @@ like_2 |>
 ```
 
 So, this figure isn't quite what I want. But it's a start.
+What I think I want is a graph that plots the proportion of times $W$ was picked out of $n$ samples vs. the probability density. 
+
+```{r}
+#| echo: fenced
+#| code-fold: false
+
+# Generate the data
+n_samples <- c(1, 2, 4, 8, 16, 32, 64)
+
+how_many_W <- function(n) 0:n
+n_W <- purrr::map(n_samples, how_many_W) |>
+  purrr::list_c()
+
+n_states <- rep(n_samples, n_samples+1)
+
+p_W <- n_W/n_states
+
+p_n <- purrr::map2(n_W, n_states, dbinom, prob = 0.5, log = FALSE) |>
+  purrr::list_c()
+
+like_3 <- data.frame(n_states = n_states, n_W = n_W, p_W = p_W, p_n = p_n)
+```
+
+```{r}
+like_3 |>
+  ggplot() +
+  geom_point(aes(x = p_W, y = p_n)) +
+  facet_wrap(n_states, ncol = 3) +
+  theme_classic() +
+  ggtitle("Probability density for a given proportion of W's as number of samples increases.")
+```
+
+Yes. That's it.
