@@ -1,0 +1,410 @@
+# Chapters 1-3
+
+## About
+
+This page summarizes work related to chapters 1-3 of *Statistical Rethinking* [-@McElreath2020-fg].
+
+## Setup
+
+Source libraries for more efficient and readable code.
+
+```{r}
+suppressPackageStartupMessages(library(ggplot2))
+```
+
+## Components of the model
+
+See [-@McElreath2020-fg pp. 32-35].
+
+$$ Pr(W,L|p)=\frac{(W+L)!}{W!L!}p^W(1-p)^L $$ {#eq-cond-p-W-L}
+
+The probability of $W$ and $L$, conditional on $p$ is defined by the formula in @eq-cond-p-W-L.
+
+The `dbinom()` function computes this binomial probability.
+To compute the probability of observing $x=6$ $W$s in 9 globe tosses with $p=4$, we proceed as indicated below:
+
+```{r}
+#| echo: fenced
+#| code-fold: false
+dbinom(x = 6, size = 9, prob = 0.5, log = FALSE)
+```
+
+So, to compute the binomial probabilities for observing all $n+1$ possible cases, we proceed as follows:
+
+```{r}
+#| echo: fenced
+#| code-fold: false
+
+# Generate the data
+n_W <- 0:9
+p_n <- purrr::map(n_W, dbinom, size = 9, prob = 0.5, log = FALSE) |>
+  purrr::list_c()
+
+like_1 <- data.frame(n_obs = n_W, p_n = p_n)
+
+# Plot the data
+like_1 |>
+  ggplot() +
+  geom_point(aes(x = n_obs, y = p_n)) +
+  theme_classic()
+```
+
+To produce a set of binomial plots based on increasing numbers of samples, we proceed as follows.
+
+```{r}
+#| echo: fenced
+#| code-fold: false
+
+# Generate the data
+n_samples <- c(1, 2, 4, 8, 16, 32, 64)
+
+how_many_W <- function(n) 0:n
+n_W <- purrr::map(n_samples, how_many_W) |>
+  purrr::list_c()
+
+n_states <- rep(n_samples, n_samples+1)
+
+p_n <- purrr::map2(n_W, n_states, dbinom, prob = 0.5, log = FALSE) |>
+  purrr::list_c()
+
+like_2 <- data.frame(n_states = n_states, n_W = n_W, p_n = p_n)
+```
+
+```{r}
+like_2 |>
+  ggplot() +
+  geom_point(aes(x = n_W, y = p_n)) +
+  facet_wrap(n_states, ncol = 3) +
+  theme_classic() +
+  ggtitle("Probability density as number of samples increases.")
+```
+
+So, this figure isn't quite what I want. But it's a start.
+What I think I want is a graph that plots the proportion of times $W$ was picked out of $n$ samples vs. the probability density. 
+
+```{r}
+#| echo: fenced
+#| code-fold: false
+
+# Generate the data
+n_samples <- c(1, 2, 4, 8, 16, 32, 64)
+
+how_many_W <- function(n) 0:n
+n_W <- purrr::map(n_samples, how_many_W) |>
+  purrr::list_c()
+
+n_states <- rep(n_samples, n_samples+1)
+
+p_W <- n_W/n_states
+
+p_n <- purrr::map2(n_W, n_states, dbinom, prob = 0.5, log = FALSE) |>
+  purrr::list_c()
+
+like_3 <- data.frame(n_states = n_states, n_W = n_W, p_W = p_W, p_n = p_n)
+```
+
+```{r}
+like_3 |>
+  ggplot() +
+  geom_point(aes(x = p_W, y = p_n)) +
+  facet_wrap(n_states, ncol = 3) +
+  theme_classic() +
+  ggtitle("Probability density for a given proportion of W's as number of samples increases.")
+```
+
+Yes. That's it.
+
+::: {.callout-warning}
+## What a difference a year makes
+
+I had created this notebook a year ago, then dropped it entirely.
+The following represents my work beginning in November 2026.
+
+:::
+
+## Chapter 2 exercises
+
+### 2E1. Which expression corresponds to the statement: *the probability of rain on Monday*?
+
+$p(rain|Monday)$
+
+### 2E2. Which statement correspondds to the expression: Pr(Monday|rain)?
+
+The probability that is is a Monday, given that it is raining.
+
+### 2M1. Plot grid appoximate posterior probabilities for the globe tossing model.
+
+::: {.callout-important}
+This code is adapted from p. 40 in *Rethinking Statistics, 2ed*.
+:::
+
+```{r}
+o1 <- c("W", "W", "W")
+o2 <- c("W", "W", "W", "L")
+o3 <- c("L", "W", "W", "L", "W", "W")
+
+grid_n <- 20
+p_init <- 0.5
+p.grid <- seq(from = 0, to = 1, length.out = grid_n)
+prior <- rep(p_init, grid_n)
+
+likelihood_1 <- dbinom(sum(o1 == "W"), size = length(o1), prob = p.grid)
+likelihood_2 <- dbinom(sum(o2 == "W"), size = length(o2), prob = p.grid)
+likelihood_3 <- dbinom(sum(o3 == "W"), size = length(o3), prob = p.grid)
+
+unstd.posterior_1 <- likelihood_1 * prior
+unstd.posterior_2 <- likelihood_2 * prior
+unstd.posterior_3 <- likelihood_3 * prior
+
+
+posterior_1 <- unstd.posterior_1 / sum(unstd.posterior_1)
+posterior_2 <- unstd.posterior_2 / sum(unstd.posterior_2)
+posterior_3 <- unstd.posterior_3 / sum(unstd.posterior_3)
+
+plot(
+    p.grid,
+    posterior_1,
+    type = "b",
+    xlab = "probability of water",
+    ylab = "posterior probability"
+)
+mtext("20 points")
+
+plot(
+    p.grid,
+    posterior_2,
+    type = "b",
+    xlab = "probability of water",
+    ylab = "posterior probability"
+)
+mtext("20 points")
+
+plot(
+    p.grid,
+    posterior_3,
+    type = "b",
+    xlab = "probability of water",
+    ylab = "posterior probability"
+)
+mtext("20 points")
+```
+
+Now, here's a version that uses a function.
+
+```{r}
+#| label: define-est_p_water-function
+est_p_water <- function(obs, p = 0.5, n_pts = 20) {
+    assertthat::assert_that(is.character(obs))
+    assertthat::is.number(p)
+    assertthat::assert_that(p > 0 & p <= 1)
+    assertthat::is.number(n_pts)
+    assertthat::assert_that(n_pts > 0)
+
+    p.grid <- seq(from = 0, to = 1, length.out = n_pts)
+    prior <- rep(p, n_pts)
+    n_W <- sum(obs == "W")
+    likelihood <- dbinom(n_W, size = length(obs), prob = p.grid)
+    posterior.unstd <- likelihood * prior
+    posterior <- posterior.unstd / sum(posterior.unstd)
+    m_comment <- paste0(
+        n_W,
+        " water observations out of ",
+        length(obs),
+        " | ",
+        n_pts,
+        " points"
+    )
+    plot(
+        p.grid,
+        posterior,
+        type = "b",
+        xlab = "probability of water",
+        ylab = "posterior probability"
+    )
+    mtext(m_comment)
+}
+```
+
+::: {.panel-tabset}
+
+## Observation 1
+
+```{r}
+#| label: fig-obs-1
+o1
+est_p_water(o1)
+```
+
+## Observation 2
+
+```{r}
+#| label: fig-obs-2
+o2
+est_p_water(o2)
+```
+
+## Observation 3
+
+```{r}
+#| label: fig-obs-3
+o3
+est_p_water(o3)
+```
+
+:::
+
+### 2M2. Assume a different prior for *p*.
+
+::: {.callout-note}
+This is why it was worth the time to create a function!
+:::
+
+We need to modify our function slightly.
+
+```{r}
+est_p_water_2 <- function(obs, p = 0.5, n_pts = 20) {
+  assertthat::assert_that(is.character(obs))
+  assertthat::is.number(p)
+  assertthat::assert_that(p > 0 & p <= 1)
+  assertthat::is.number(n_pts)
+  assertthat::assert_that(n_pts > 0)
+
+  p.grid <- seq(from = 0, to = 1, length.out = n_pts)
+  prior <- ifelse(p.grid < p, 0, p)
+  n_W <- sum(obs == "W")
+  likelihood <- dbinom(n_W, size = length(obs), prob = p.grid)
+  posterior.unstd <- likelihood * prior
+  posterior <- posterior.unstd / sum(posterior.unstd)
+  m_comment <- paste0(
+    n_W,
+    " water observations out of ",
+    length(obs),
+    " | ",
+    n_pts,
+    " points"
+  )
+  plot(
+    p.grid,
+    posterior,
+    type = "b",
+    xlab = "probability of water",
+    ylab = "posterior probability"
+  )
+  mtext(m_comment)
+}
+```
+
+::: {.panel-tabset}
+
+## Observation 1
+
+```{r}
+#| label: fig-obs-1-step-prior
+o1
+est_p_water_2(o1)
+```
+
+## Observation 2
+
+```{r}
+#| label: fig-obs-2-step-prior
+o2
+est_p_water_2(o2)
+```
+
+## Observation 3
+
+```{r}
+#| label: fig-obs-3-step-prior
+o3
+est_p_water_2(o3)
+```
+
+:::
+
+### PM3. Two globes, Earth with *p*(Water)=0.70 and Mars with *p*(Water)=0.
+
+We want to compute $p(Earth|land)$.
+
+$p(Earth|land)=\frac{p(land|Earth)p(Earth)}{p(land)}$
+
+$p(land|Earth)=0.30$
+$p(land|Mars)=1.0$
+$p(Earth)=0.5$
+$p(land)=0.5*p(land|Earth)+0.5*p(land|Mars)$
+
+```{r}
+p_land_Earth = 0.30
+p_land_Mars = 1
+p_Earth = 0.5
+p_land <- p_Earth*(p_land_Earth) + (1-p_Earth)*p_land_Mars
+
+p_Earth_land <- (p_land_Earth*p_Earth)/p_land
+p_Earth_land
+```
+
+### 2M4. Card deck with three cards.
+
+$c_{bb}\rightarrow{b,b}$
+$c_{bw}\rightarrow{b,w}$
+$c_{ww}\rightarrow{w,w}$
+
+There are two events. One involves the choice of card, the other involves the choice of side.
+So, the space of possible outcomes when the observer chooses one card is as follows:
+
+$b,b,b,w,w,w$
+
+$c_{bb}$ could produce the observed data (black side up) in 2 ways.
+$c_{bw}$ could produce the observed data in one way.
+$c_{ww}$ could not produce the observed data, so there are zero ways.
+
+So, there are three ways the observed data could be produced. In two of the ways, the other side is black.
+Thus, $p(other-side-black|observed)=2/3$
+
+### 2H1. Pandas.
+
+$p(twin|A)=.1$
+$p(twin|B)=.2$
+
+We observe a panda who gives birth to twins, what is the probability that the next birth will also be twins?
+Species is unknown.
+
+Species unknown and likely sampled in equal proportions means that $p(A)=p(B)=0.5$
+
+Species A could generate the observed first birth in 1/10 ways.
+Species B could generate the observed first birth in 2/10 ways.
+We want the probability of observing two consecutive twin births, $p(twin*twin)$.
+
+$p(twin*twin)=p(twin*twin|A)p(A)+p(twin*twin|B)p(B)$
+$p(twin*twin)=p(twin|A)*p(twin|A)*p(A)+p(twin|B)p(twin|B)*p(B)$
+
+```{r}
+p_twin_A <- 0.1
+p_twin_B <- 0.2
+p_A <- 0.5
+
+p_twin_twin <- p_twin_A*p_twin_A*p_A + p_twin_B*p_twin_B*(1-p_A)
+p_twin_twin
+```
+
+So, the probability that the next birth will be a twin, given that the first was a twin, $p(twin,twin)=$`{r} p_twin_twin`.
+
+### 2H2. More pandas
+
+What is the probability that the species is A, given that the first birth is a pair of twins?
+In other words, what is $p(A|twin)$?
+
+$p(A|twin)=\frac{p(twin|A)*p(A)}{p(twin)}$
+
+$p(twin)=p(twin|A)*p(A)+p(twin|B)*p(B)$
+
+```{r}
+p_twin <- p_twin_A*p_A+p_twin_B*(1-p_A)
+```
+
+```{r}
+p_A_twin <- (p_twin_A*p_A)/p_twin
+p_A_twin
+```
+
+So, $p(A|twin)$=`{r} p_A_twin`.

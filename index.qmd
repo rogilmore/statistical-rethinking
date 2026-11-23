@@ -1,0 +1,16 @@
+---
+title: "Gilmore rethinks"
+author: "Rick O. Gilmore"
+---
+
+## About
+
+I ran across McElreath's book [-@McElreath2020-fg] and YouTube video series [@McElreath-YouTube] by accident.
+
+But Pasteur said that "fortune favors the prepared mind" [@Unknown2004-tz]. So, I acknowledge that I have enjoyed these materials in large part because I was looking for something like them.
+Specifically, I've recommended simulation and visualization as vital data analytic techniques without really appreciating how these ideas mesh with Bayesian approaches.
+I find myself generating directed acyclic graphs (DAGs) without appreciating their utility in data analyses.
+And, I have read, but only partially grasped the ideas in Judea Pearl's work on causal modeling [@Pearl2009-fh; @Mackenzie2020-rg].
+
+This site represents my notes and comments on the textbook and the video series as I work my way through them.
+By creating code, equations, and visualizations, I hope to master the material and add some new [Quarto](https://quarto.org) tricks to my toolkit.
