@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 statistical-rethinking.Rproj
+
+/.quarto/
+**/*.quarto_ipynb

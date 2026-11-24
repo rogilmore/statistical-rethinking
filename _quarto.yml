@@ -6,11 +6,6 @@ project:
 
 website:
   title: "Gilmore rethinks"
-  # announcement: 
-  #   content: "The Week 11 Siegler & Alibali chapter is on Canvas now." 
-  #   position: below-navbar
-  #   icon: info-circle
-  #   dismissable: true
   sidebar:
     style: "docked"
     search: true
@@ -49,7 +44,3 @@ format:
     html-math-method: mathjax
     code-fold: true
     code-tools: true
-
-  # pdf:
-  #   documentclass: scrreprt
-    
