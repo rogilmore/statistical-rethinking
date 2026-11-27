@@ -63,7 +63,7 @@ how_many_W <- function(n) 0:n
 n_W <- purrr::map(n_samples, how_many_W) |>
   purrr::list_c()
 
-n_states <- rep(n_samples, n_samples+1)
+n_states <- rep(n_samples, n_samples + 1)
 
 p_n <- purrr::map2(n_W, n_states, dbinom, prob = 0.5, log = FALSE) |>
   purrr::list_c()
@@ -94,9 +94,9 @@ how_many_W <- function(n) 0:n
 n_W <- purrr::map(n_samples, how_many_W) |>
   purrr::list_c()
 
-n_states <- rep(n_samples, n_samples+1)
+n_states <- rep(n_samples, n_samples + 1)
 
-p_W <- n_W/n_states
+p_W <- n_W / n_states
 
 p_n <- purrr::map2(n_W, n_states, dbinom, prob = 0.5, log = FALSE) |>
   purrr::list_c()
@@ -110,7 +110,9 @@ like_3 |>
   geom_point(aes(x = p_W, y = p_n)) +
   facet_wrap(n_states, ncol = 3) +
   theme_classic() +
-  ggtitle("Probability density for a given proportion of W's as number of samples increases.")
+  ggtitle(
+    "Probability density for a given proportion of W's as number of samples increases."
+  )
 ```
 
 Yes. That's it.
@@ -335,12 +337,12 @@ $p(Earth)=0.5$
 $p(land)=0.5*p(land|Earth)+0.5*p(land|Mars)$
 
 ```{r}
-p_land_Earth = 0.30
-p_land_Mars = 1
-p_Earth = 0.5
-p_land <- p_Earth*(p_land_Earth) + (1-p_Earth)*p_land_Mars
+p_land_Earth <- 0.30
+p_land_Mars <- 1
+p_Earth <- 0.5
+p_land <- p_Earth * (p_land_Earth) + (1 - p_Earth) * p_land_Mars
 
-p_Earth_land <- (p_land_Earth*p_Earth)/p_land
+p_Earth_land <- (p_land_Earth * p_Earth) / p_land
 p_Earth_land
 ```
 
@@ -384,7 +386,7 @@ p_twin_A <- 0.1
 p_twin_B <- 0.2
 p_A <- 0.5
 
-p_twin_twin <- p_twin_A*p_twin_A*p_A + p_twin_B*p_twin_B*(1-p_A)
+p_twin_twin <- p_twin_A * p_twin_A * p_A + p_twin_B * p_twin_B * (1 - p_A)
 p_twin_twin
 ```
 
@@ -400,11 +402,11 @@ $p(A|twin)=\frac{p(twin|A)*p(A)}{p(twin)}$
 $p(twin)=p(twin|A)*p(A)+p(twin|B)*p(B)$
 
 ```{r}
-p_twin <- p_twin_A*p_A+p_twin_B*(1-p_A)
+p_twin <- p_twin_A * p_A + p_twin_B * (1 - p_A)
 ```
 
 ```{r}
-p_A_twin <- (p_twin_A*p_A)/p_twin
+p_A_twin <- (p_twin_A * p_A) / p_twin
 p_A_twin
 ```
 
@@ -418,8 +420,8 @@ So, $p(A|twin)$=`{r} p_A_twin`.
 p_grid <- seq(from = 0, to = 1, length.out = 1000)
 prior <- rep(1, 1000)
 likelihood <- dbinom(x = 6, size = 9, prob = p_grid)
-posterior <- likelihood*prior
-posterior <- posterior/sum(posterior)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
 set.seed(100)
 samples <- sample(x = p_grid, prob = posterior, size = 1e4, replace = TRUE)
 ```
@@ -430,7 +432,7 @@ How much of the posterior probablility lies below p = 0.2?
 
 
 ```{r}
-sum(samples < 0.2)/length(samples)
+sum(samples < 0.2) / length(samples)
 ```
 
 ### 3E2
@@ -439,7 +441,7 @@ How much posterior probability lies above p = 0.8?
 
 
 ```{r}
-sum(samples > 0.8)/length(samples)
+sum(samples > 0.8) / length(samples)
 ```
 
 ### 3E3
@@ -447,7 +449,7 @@ sum(samples > 0.8)/length(samples)
 How much lies between 0.2 and 0.8, e.g., in the interval $[0.2,0.8]$
 
 ```{r}
-sum(samples >= 0.2 & samples <= 0.8)/length(samples)
+sum(samples >= 0.2 & samples <= 0.8) / length(samples)
 ```
 
 ### 3E4
@@ -491,8 +493,8 @@ Suppose the globe tossing data had turned out to be 8 water in 15 tosses. Constr
 p_grid <- seq(from = 0, to = 1, length.out = 1000)
 prior <- rep(1, 1000)
 likelihood <- dbinom(x = 8, size = 15, prob = p_grid)
-posterior <- likelihood*prior
-posterior <- posterior/sum(posterior)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
 set.seed(100)
 samples <- sample(x = p_grid, prob = posterior, size = 1e4, replace = TRUE)
 ```
@@ -500,12 +502,12 @@ samples <- sample(x = p_grid, prob = posterior, size = 1e4, replace = TRUE)
 ```{r}
 #| label: fig-posterior-p-8-in-15
 plot(
-    p_grid,
-    posterior,
-    type = "b",
-    xlab = "probability of water",
-    ylab = "posterior probability"
-  )
+  p_grid,
+  posterior,
+  type = "b",
+  xlab = "probability of water",
+  ylab = "posterior probability"
+)
 ```
 
 ### 3M2
@@ -519,3 +521,406 @@ dens(samples)
 HPDI(samples, prob = 0.9)
 ```
 
+### 3M3
+
+>Construct a posterior predictive check for this model and data. This means simulate the distribution of samples averaging gover the posterior uncertainty in *p*. What is the probability of observing 8 water in 15 tosses?
+
+See p. 66 for ideas.
+
+```{r}
+#| label: fig-posterior-check-8-in-15
+w <- rbinom(n = 1e4, size = 15, prob = samples)
+simplehist(w)
+p_8_in_15 <- sum(w == 8) / length(w)
+p_8_in_15
+```
+
+### 3M4
+
+>Using the posterior distribution from the new (8/15) data, now calculate the probability of observing 6 water in 9 tosses.
+
+```{r}
+#| label: fig-posterior-check-6-in-9
+w <- rbinom(n = 1e4, size = 9, prob = samples)
+simplehist(w)
+p_6_in_9 <- sum(w == 6) / length(w)
+p_6_in_9
+```
+
+### 3M5
+
+>Start over at 3M1, but now use a prior that is zero below *p*=05. and a constant above *p*=0.5...
+
+
+```{r}
+p_grid <- seq(from = 0, to = 1, length.out = 1000)
+prior_new <- ifelse(p_grid < 0.5, 0, 1)
+likelihood <- dbinom(x = 8, size = 15, prob = p_grid)
+posterior_new <- likelihood * prior_new
+posterior_new <- posterior_new / sum(posterior_new)
+samples_new <- sample(
+    x = p_grid,
+    prob = posterior_new,
+    size = 1e4,
+    replace = TRUE
+)
+```
+
+```{r}
+#| label: fig-posterior-p-8-in-15-old
+plot(
+  p_grid,
+  posterior,
+  type = "b",
+  xlab = "probability of water",
+  ylab = "posterior probability"
+)
+```
+
+```{r}
+#| label: fig-posterior-p-8-in-15-new
+plot(
+  p_grid,
+  posterior_new,
+  type = "b",
+  xlab = "probability of water",
+  ylab = "posterior probability"
+)
+```
+
+```{r}
+HPDI(samples, prob = 0.9)
+```
+
+```{r}
+HPDI(samples_new, prob = 0.9)
+```
+
+The HPDI for the new prior is narrower than the one for the flat prior.
+
+We can also evaluate this relative to the known value of *p*=0.7, as follows.
+
+```{r}
+w <- rbinom(n = 1e4, size = 10, prob = samples)
+simplehist(w)
+p_7_in_10 <- sum(w == 7) / length(w)
+p_7_in_10
+```
+
+```{r}
+w_new <- rbinom(n = 1e4, size = 10, prob = samples_new)
+simplehist(w_new)
+p_7_in_10_new <- sum(w_new == 7) / length(w_new)
+p_7_in_10_new
+```
+
+The probability of observing the expected number of 7 waters in 10 tosses is higher (`{r} p_7_in_10_new`) with the more informative prior than with the flat prior (`{r} p_7_in_10`).
+
+### 3H1
+
+We load the data from the rethinking package.
+
+```{r}
+data(homeworkch3)
+```
+
+```{r}
+p_grid <- seq(from = 0, to = 1, length.out = 1000)
+prior <- rep(1, length(p_grid))
+likelihood <- dbinom(
+    x = 111,
+    size = length(birth1) + length(birth2),
+    prob = p_grid
+)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+```
+
+Next, we plot the posterior.
+
+```{r}
+#| label: fig-3H1-posterior
+plot(
+  p_grid,
+  posterior,
+  type = "b",
+  xlab = "probability of a boy",
+  ylab = "posterior probability"
+)
+```
+
+What value of *p* maximizes the posterior probability?
+
+```{r}
+max_posterior <- posterior == max(posterior)
+max_posterior_index <- seq(1:1000)[max_posterior]
+p_grid[max_posterior_index]
+```
+
+### 3H2
+
+```{r}
+samples_boys <- sample(x = p_grid, prob = posterior, size = 1e4, replace = TRUE)
+```
+
+```{r}
+HPDI(samples_boys, prob = .5)
+HPDI(samples_boys, prob = .89)
+HPDI(samples_boys, prob = .97)
+```
+
+### 3H3
+
+```{r}
+boys <- rbinom(1e4, size = 200, prob = 0.5)
+boys_model <- rbinom(1e4, size = 200, prob = samples_boys)
+dens(boys)
+dens(boys_model)
+```
+
+
+```{r}
+boys_df <- data.frame(
+  data = c(boys, boys_model),
+  model = rep(c("pred", "obs"), each = 1e4)
+)
+
+boys_df |>
+  ggplot() +
+  geom_density(aes(x = data, color = model))
+```
+
+The baseline model assuming $p(boy)=0.5$ is shifted to the left of the model based on the observed frequency of boy births.
+Thus, the baseline model does not appear to be a good fit for the observed data.
+
+### 3H4
+
+```{r}
+p_grid <- seq(from = 0, to = 1, length.out = 1000)
+prior_1st <- rep(1, length(p_grid))
+likelihood_1st <- dbinom(x = sum(birth1), size = length(birth1), prob = p_grid)
+posterior_1st <- likelihood_1st * prior_1st
+posterior_1st <- posterior_1st / sum(posterior_1st)
+
+plot(
+  p_grid,
+  posterior_1st,
+  type = "b",
+  xlab = "probability of a boy as firstborn",
+  ylab = "posterior probability"
+)
+
+samples_boys_1st <- sample(
+  x = p_grid,
+  prob = posterior_1st,
+  size = 1e4,
+  replace = TRUE
+)
+```
+
+```{r}
+HPDI(samples_boys_1st, prob = .5)
+HPDI(samples_boys_1st, prob = .89)
+HPDI(samples_boys_1st, prob = .97)
+```
+
+The highest density probability estimate intervals are shifted to lower values.
+
+```{r}
+max_posterior_1st <- posterior_1st == max(posterior_1st)
+max_posterior_index <- seq(1:1000)[max_posterior_1st]
+p_grid[max_posterior_index]
+
+```
+
+```{r}
+boys <- rbinom(1e4, size = 100, prob = 0.5)
+boys_1st <- rbinom(1e4, size = 100, prob = samples_boys_1st)
+
+boys_df <- data.frame(
+  data = c(boys, boys_1st),
+  model = rep(c("pred", "1st"), each = 1e4)
+)
+
+boys_df |>
+  ggplot() +
+  geom_density(aes(x = data, color = model))
+```
+
+The model assuming equal probability of a boy fits the observed data for first borns better than the model assuming equal probability of a boy in both 1st and 2nd births.
+
+### 3H5
+
+#### Modeling 2nd births
+
+```{r}
+girls1 <- as.numeric(!(as.logical(birth1)))
+boys1 <- birth1
+boys2 <- birth2
+girls2 <- as.numeric(!(as.logical(birth2)))
+girl_boy <- as.numeric(as.logical(girls1) & as.logical(boys2))
+boy_boy <- as.numeric(as.logical(boys1) & as.logical(boys2))
+girl_girl <- as.numeric(as.logical(girls1) & as.logical(girls2))
+boy_girl <- as.numeric(as.logical(boys1) & as.logical(girls2))
+```
+
+
+```{r}
+p_grid <- seq(from = 0, to = 1, length.out = 1000)
+prior <- rep(1, length(p_grid))
+likelihood_girl_boy <- dbinom(
+  x = sum(girl_boy),
+  size = length(girl_boy),
+  prob = p_grid
+)
+posterior_girl_boy <- likelihood_girl_boy * prior
+posterior_girl_boy <- posterior_girl_boy / sum(posterior_girl_boy)
+
+likelihood_boy_boy <- dbinom(
+  x = sum(boy_boy),
+  size = length(boy_boy),
+  prob = p_grid
+)
+posterior_boy_boy <- likelihood_boy_boy * prior
+posterior_boy_boy <- posterior_boy_boy / sum(posterior_boy_boy)
+
+plot(
+  p_grid,
+  posterior_girl_boy,
+  type = "b",
+  xlab = "probability of a girl then a boy",
+  ylab = "posterior probability"
+)
+
+samples_girl_boy <- sample(
+  x = p_grid,
+  prob = posterior_girl_boy,
+  size = 1e4,
+  replace = TRUE
+)
+HPDI(samples_girl_boy, prob = .5)
+HPDI(samples_girl_boy, prob = .89)
+HPDI(samples_girl_boy, prob = .97)
+
+max_posterior_girl_boy <- posterior_girl_boy == max(posterior_girl_boy)
+max_posterior_index <- seq(1:1000)[posterior_girl_boy]
+p_grid[posterior_girl_boy]
+
+plot(
+  p_grid,
+  posterior_boy_boy,
+  type = "b",
+  xlab = "probability of a boy then another boy",
+  ylab = "posterior probability"
+)
+
+samples_boy_boy <- sample(
+  x = p_grid,
+  prob = posterior_boy_boy,
+  size = 1e4,
+  replace = TRUE
+)
+HPDI(samples_boy_boy, prob = .5)
+HPDI(samples_boy_boy, prob = .89)
+HPDI(samples_boy_boy, prob = .97)
+
+max_posterior_boy_boy <- posterior_boy_boy == max(posterior_boy_boy)
+max_posterior_index <- seq(1:1000)[posterior_boy_boy]
+p_grid[posterior_boy_boy]
+
+boys <- rbinom(1e4, size = 100, prob = 0.5)
+boy_2nd <- rbinom(1e4, size = 100, prob = samples_girl_boy)
+boy_1st <- rbinom(1e4, size = 100, prob = samples_boy_boy)
+
+boys_df <- data.frame(
+  data = c(boys, boy_2nd, boy_1st),
+  model = rep(c("pred", "2nd", "both"), each = 1e4)
+)
+
+boys_df |>
+  ggplot() +
+  geom_density(aes(x = data, color = model))
+```
+
+
+```{r}
+p_grid <- seq(from = 0, to = 1, length.out = 1000)
+prior <- rep(1, length(p_grid))
+
+likelihood_girl_boy <- dbinom(
+  x = sum(girl_boy),
+  size = length(girl_boy),
+  prob = p_grid
+)
+posterior_girl_boy <- likelihood_girl_boy * prior
+posterior_girl_boy <- posterior_girl_boy / sum(posterior_girl_boy)
+
+likelihood_boy_boy <- dbinom(
+  x = sum(boy_boy),
+  size = length(girl_boy),
+  prob = p_grid
+)
+posterior_boy_boy <- likelihood_boy_boy * prior
+posterior_boy_boy <- posterior_boy_boy / sum(posterior_boy_boy)
+
+likelihood_boy_girl <- dbinom(
+  x = sum(boy_girl),
+  size = length(boy_girl),
+  prob = p_grid
+)
+posterior_boy_girl <- likelihood_boy_girl * prior
+posterior_boy_girl <- posterior_boy_girl / sum(posterior_boy_girl)
+
+likelihood_girl_girl <- dbinom(
+  x = sum(girl_girl),
+  size = length(girl_girl),
+  prob = p_grid
+)
+posterior_girl_girl <- likelihood_girl_girl * prior
+posterior_girl_girl <- posterior_girl_girl / sum(posterior_girl_girl)
+
+samples_girl_boy <- sample(
+  x = p_grid,
+  prob = posterior_girl_boy,
+  size = 1e4,
+  replace = TRUE
+)
+samples_boy_boy <- sample(
+  x = p_grid,
+  prob = posterior_boy_boy,
+  size = 1e4,
+  replace = TRUE
+)
+samples_boy_girl <- sample(
+  x = p_grid,
+  prob = posterior_boy_girl,
+  size = 1e4,
+  replace = TRUE
+)
+samples_girl_girl <- sample(
+  x = p_grid,
+  prob = posterior_girl_girl,
+  size = 1e4,
+  replace = TRUE
+)
+
+eq_prob <- rbinom(1e4, size = 100, prob = 0.25)
+girl_boy <- rbinom(1e4, size = 100, prob = samples_girl_boy)
+boy_boy <- rbinom(1e4, size = 100, prob = samples_boy_boy)
+boy_girl <- rbinom(1e4, size = 100, prob = samples_boy_girl)
+girl_girl <- rbinom(1e4, size = 100, prob = samples_girl_girl)
+
+birth_df <- data.frame(
+  data = c(eq_prob, girl_boy, boy_boy, boy_girl, girl_girl),
+  model = rep(
+    c("eq_prob", "girl_boy", "boy_boy", "boy_girl", "girl_girl"),
+    each = 1e4
+  )
+)
+
+birth_df |>
+  ggplot() +
+  geom_density(aes(x = data, color = model))
+```
+
+Based on the observed data, the sex of a second child depends on the sex of the first child. If the first child is a girl, there is a higher likelihood that the second child will be a boy. If the first child is a boy, there is a slighly higher probability that the second child will be a girl.
