@@ -1,0 +1,114 @@
+---
+title: "Chapter 4"
+format: html
+---
+
+## About
+
+This page summarizes work related to chapter 4 of *Statistical Rethinking* [-@McElreath2020-fg].
+
+## Setup
+
+Source key libraries for more efficient and readable code.
+
+```{r}
+library(rethinking)
+library(ggplot2)
+```
+
+## 4.1
+
+```{r}
+#| label: fig-hist-random-walk
+pos <- replicate(n = 1000, sum(runif(n = 16, min = -1, max = 1)))
+
+hist(pos)
+```
+
+To replicate Figure 4.2.
+
+```{r}
+rw <- function(steps = 1, n = 50) {
+  df <- data.frame(trajectory = 1:n, step = rep(0, n), pos = rep(0, n))
+  this_df <- df
+  for (i in 1:steps) {
+    new_pos <- this_df$pos + runif(n, -1, 1)
+    this_df <- data.frame(trajectory = 1:n, step = rep(i, n), pos = new_pos)
+    df <- rbind(df, this_df)
+  }
+  df
+}
+```
+
+```{r}
+rw16 <- rw(16)
+```
+
+```{r}
+#| label: fig-random-walks
+rw16 |>
+  ggplot() +
+  geom_line(aes(x = step, y = pos, group = trajectory), alpha = 0.2)
+```
+
+```{r}
+#| label: fig-hist-position
+rw16 |>
+  ggplot() +
+  geom_histogram(aes(x = pos), bins = 12)
+```
+
+### 4.1.2
+
+```{r}
+#| label: fig-prod-4.3
+growth <- replicate(n = 10000, prod(1 + runif(12, 0, 0.2)))
+dens(growth, norm.comp=TRUE)
+```
+
+```{r}
+#| label: fig-prod-4.4
+
+big <- replicate(10000, prod(1 + runif(12, 0, 0.5)))
+small <- replicate(10000, prod(1 + runif(12, 0, .01)))
+```
+
+::: {.panel-tabset}
+
+## Big product
+
+```{r}
+#| label: fig-prod-4.4-big
+
+dens(big, norm.comp = TRUE)
+```
+
+## Small product
+
+```{r}
+#| label: fig-prod-4.4-small
+
+dens(small, norm.comp = TRUE)
+```
+
+:::
+
+### 4.1.3
+
+```{r}
+#| label: fig-prod-4.5-log
+log.big <- replicate(10000, log(prod(1 + runif(12, 0, 0.5))))
+dens(log.big, norm.comp = TRUE)
+```
+
+So, the log product is nearly Gaussian.
+
+### 4.1.4
+
+Merely as an exercise to practice LaTex, here is the equation on p. 76:
+
+$$p(y|\mu,\sigma)=\frac{1}{\sqrt{2\pi\sigma^2}}exp(-\frac{(y-\mu)^2}{2\sigma^2})$$
+
+Let's also try the $\tau$ version:
+
+$$p(y|\mu,\tau)=\sqrt{\frac{\tau}{2\pi}}exp(-\frac{1}{2}\tau(y-\mu)^2)$$
