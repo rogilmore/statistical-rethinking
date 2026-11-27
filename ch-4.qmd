@@ -1,0 +1,59 @@
+---
+title: "Chapter 4"
+format: html
+---
+
+## About
+
+This page summarizes work related to chapter 4 of *Statistical Rethinking* [-@McElreath2020-fg].
+
+## Setup
+
+Source key libraries for more efficient and readable code.
+
+```{r}
+library(rethinking)
+library(ggplot2)
+```
+
+## 4.1
+
+```{r}
+#| label: fig-hist-random-walk
+pos <- replicate(n = 1000, sum(runif(n = 16, min = -1, max = 1)))
+
+hist(pos)
+```
+
+To replicate Figure 4.2.
+
+```{r}
+rw <- function(steps = 1, n = 50) {
+  df <- data.frame(trajectory = 1:n, step = rep(0, n), pos = rep(0, n))
+  this_df <- df
+  for (i in 1:steps) {
+    new_pos <- this_df$pos + runif(n, -1, 1)
+    this_df <- data.frame(trajectory = 1:n, step = rep(i, n), pos = new_pos)
+    df <- rbind(df, this_df)
+  }
+  df
+}
+```
+
+```{r}
+rw16 <- rw(16)
+```
+
+```{r}
+#| label: fig-random-walks
+rw16 |>
+  ggplot() +
+  geom_line(aes(x = step, y = pos, group = trajectory), alpha = 0.2)
+```
+
+```{r}
+#| label: fig-hist-position
+rw16 |>
+  ggplot() +
+  geom_histogram(aes(x = pos), bins = 12)
+```
