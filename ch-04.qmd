@@ -14,6 +14,7 @@ Source key libraries for more efficient and readable code.
 ```{r}
 library(rethinking)
 library(ggplot2)
+library(dplyr)
 ```
 
 ## 4.1
@@ -63,7 +64,7 @@ rw16 |>
 ```{r}
 #| label: fig-prod-4.3
 growth <- replicate(n = 10000, prod(1 + runif(12, 0, 0.2)))
-dens(growth, norm.comp=TRUE)
+dens(growth, norm.comp = TRUE)
 ```
 
 ```{r}
@@ -112,3 +113,177 @@ $$p(y|\mu,\sigma)=\frac{1}{\sqrt{2\pi\sigma^2}}exp(-\frac{(y-\mu)^2}{2\sigma^2})
 Let's also try the $\tau$ version:
 
 $$p(y|\mu,\tau)=\sqrt{\frac{\tau}{2\pi}}exp(-\frac{1}{2}\tau(y-\mu)^2)$$
+
+## 4.2
+
+For my own amusement I decided to create a function around *R code 4.6*.
+
+```{r}
+earth_water <- function(w = 6, n = 9, l = 100) {
+  assertthat::is.number(w)
+  assertthat::is.number(n)
+  assertthat::is.number(l)
+  assertthat::assert_that(w >= 0)
+  assertthat::assert_that(n > 0)
+  assertthat::assert_that(n >= w)
+  assertthat::assert_that(l > 0)
+
+  p_grid <- seq(from = 0, to = 1, length.out = l)
+  posterior <- dbinom(w, n, p_grid) * dunif(p_grid, 0, 1)
+
+  data.frame(p = p_grid, post = posterior / sum(posterior))
+}
+```
+
+## 4.3 Gaussian model of height
+
+### 4.3.1
+
+```{r}
+data(Howell1)
+d <- Howell1
+str(d)
+```
+
+```{r}
+precis(d)
+```
+
+::: {.callout-note}
+## Nice summary function!
+
+The `precis()` function does a nice job.
+:::
+
+I'm going to take a visualize-first strategy here.
+
+::: {.panel-tabset}
+
+## Height by weight
+
+```{r}
+#| label: fig-howell1-height-weight
+
+d |>
+  mutate(sex = if_else(male == 1, "M", "F")) |>
+  ggplot() +
+  geom_point(aes(x = weight, y = height, color = sex))
+```
+
+## Height by age
+
+```{r}
+#| label: fig-howell1-height-age
+d |>
+  mutate(sex = if_else(male == 1, "M", "F")) |>
+  ggplot() +
+  geom_point(aes(x = age, y = height, color = sex))
+```
+
+## Weight by age
+
+```{r}
+#| label: fig-howell1-weight-age
+d |>
+  mutate(sex = if_else(male == 1, "M", "F")) |>
+  ggplot() +
+  geom_point(aes(x = age, y = weight, color = sex))
+```
+
+:::
+
+
+Based on these figures, I believe the following:
+
+- There is a curvilinear relationship between weight and height across age.
+- Both height and weight increase in people younger than 18-20, then asymptote.
+- Men are taller than women for a given weight.
+
+### 4.3.2
+
+Returning to the text, the model specified focuses on adults.
+
+```{r}
+adults <- d[d$age >= 18, ]
+```
+
+Let's specify some priors.
+
+$$
+h_i \sim N(\mu, \sigma)
+$$ {#eq-h_1}
+$$
+\mu \sim N(178, 20)
+$$ {#eq-mu}
+$$
+\sigma \sim U(0,50)
+$$ {#eq-sigma}
+Let's visualize these.
+
+```{r}
+#| label: fig-mu
+#| fig-cap: "Plot of prior for mu"
+
+curve(dnorm(x, 178, 20), from = 100, to = 250)
+```
+
+```{r}
+#| label: fig-sigma
+
+curve(dunif(x, 0, 50), from = -10, to = 60)
+```
+
+Let's sample from this model and examine the prior predictive result.
+
+```{r}
+sample_mu <- rnorm(1e4, 178, 20)
+sample_sigma <- runif(1e4, 0, 50)
+prior_h <- rnorm(1e4, sample_mu, sample_sigma)
+```
+
+Then we visualize the prior predictive distribution for height.
+
+```{r}
+#| label: fig-h-prior
+#| fig-cap: "Prior predictive distribution for height"
+#| 
+dens(prior_h)
+```
+
+What are the effects of a wider spread for $\mu$?
+
+```{r}
+#| label: fig-h-prior-wide
+#| fig-cap: "Prior predictive distribution for mu with a much larger value for sigma. R code 4.15"
+
+sample_mu <- rnorm(1e4, 178, 100)
+prior_h_wide <- rnorm(1e4, sample_mu, sample_sigma)
+dens(prior_h_wide)
+```
+
+That's craziness, craziness! Heights can't be less than zero!
+
+### 4.3.3
+
+```{r}
+mu.list <- seq(from = 150, to = 160, length.out = 100)
+sigma.list <- seq(from = 7, to = 9, length.out = 100)
+post <- expand.grid(mu = mu.list, sigma = sigma.list)
+post$LL <- sapply(1:nrow(post), function(i) {
+  sum(dnorm(adults$height, post$mu[i], post$sigma[i], log = TRUE))
+})
+
+post$prod <- post$LL +
+  dnorm(post$mu, 178, 20, TRUE) +
+  dunif(post$sigma, 0, 50, TRUE)
+post$prob <- exp(post$prod - max(post$prod))
+```
+
+```{r}
+#| label: fig-contour-posterior
+#| fig-cap: "Contour plot of posterior from R code 4.17"
+
+contour_xyz(post$mu, post$sigma, post$prob)
+```
+
+This is as good a stopping point as any. 2026-11-28-0754.
